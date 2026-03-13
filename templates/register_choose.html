@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Join UMentor{% endblock %}
+{% block body_class %}page--auth{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width:600px">
+  <div class="auth-card">
+    <h1 class="auth-card__title" style="text-align:center">
+      Join <span style="color:var(--color-primary)">UMentor</span>
+    </h1>
+    <p class="auth-card__subtitle" style="text-align:center;margin-bottom:var(--space-8)">
+      The peer tutoring platform built for students. Choose how you'd like to sign up.
+    </p>
+
+    <div class="role-chooser">
+
+      <!-- Parent card -->
+      <a class="role-card" href="{{ url_for('auth.register_parent') }}">
+        <span class="role-card__icon">&#128106;</span>
+        <span class="role-card__title">I'm a Parent</span>
+        <span class="role-card__desc">
+          Create an account for yourself and manage your child's access to UMentor.
+        </span>
+        <span class="btn btn--primary btn--sm" style="cursor:pointer">Get started &rarr;</span>
+      </a>
+
+      <!-- Kid card -->
+      <a class="role-card" href="{{ url_for('auth.register_kid') }}">
+        <span class="role-card__icon">&#127891;</span>
+        <span class="role-card__title">I'm a Student</span>
+        <span class="role-card__desc">
+          Under 18? We'll send your parent or guardian a quick approval email to get you started.
+        </span>
+        <span class="btn btn--ghost btn--sm" style="cursor:pointer">Start here &rarr;</span>
+      </a>
+
+    </div>
+
+    <p class="auth-card__footer">
+      Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

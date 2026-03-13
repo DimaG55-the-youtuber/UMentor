@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+
+  <!-- ---------------------------------------------------------------- -->
+  <!-- Hero header                                                        -->
+  <!-- ---------------------------------------------------------------- -->
+  <header class="dashboard__header">
+    <div>
+      <h1 class="dashboard__title">
+        Hello, {{ current_user.username }}
+        <span class="role-badge role-badge--{{ current_user.role }}">{{ current_user.role }}</span>
+      </h1>
+      <p class="dashboard__subtitle">
+        <span id="onlineCount">{{ users | selectattr('is_online') | list | length }}</span>
+        peer(s) online right now
+      </p>
+    </div>
+  </header>
+
+  <!-- ---------------------------------------------------------------- -->
+  <!-- Search / filter                                                    -->
+  <!-- ---------------------------------------------------------------- -->
+  <div class="dashboard__search">
+    <input
+      class="form-input"
+      type="search"
+      id="userSearch"
+      placeholder="Search users…"
+      aria-label="Search users"
+    />
+  </div>
+
+  <!-- ---------------------------------------------------------------- -->
+  <!-- User grid                                                          -->
+  <!-- ---------------------------------------------------------------- -->
+  <section class="user-grid" id="userGrid" aria-label="User list">
+    {% if users %}
+      {% for user in users %}
+      <article
+        class="user-card {% if user.is_online %}user-card--online{% else %}user-card--offline{% endif %}"
+        data-user-id="{{ user.id }}"
+        data-username="{{ user.username }}"
+        data-online="{{ 'true' if user.is_online else 'false' }}"
+        aria-label="{{ user.username }}, {{ 'online' if user.is_online else 'offline' }}"
+      >
+        <div class="user-card__avatar" aria-hidden="true">
+          {{ user.username[0].upper() }}
+        </div>
+
+        <div class="user-card__info">
+          <span class="user-card__name">{{ user.username }}</span>
+          <span class="user-card__status">
+            <span class="status-dot {% if user.is_online %}status-dot--online{% else %}status-dot--offline{% endif %}"
+                  aria-hidden="true"></span>
+            <span class="status-text">
+              {% if user.is_online %}Online{% else %}Offline{% endif %}
+            </span>
+            <span class="role-badge role-badge--{{ user.role }}">{{ user.role }}</span>
+          </span>
+        </div>
+
+        <div class="user-card__action">
+          {% if user.is_online %}
+          <button
+            class="btn btn--primary btn--sm call-btn"
+            data-target-id="{{ user.id }}"
+            data-target-name="{{ user.username }}"
+            aria-label="Start call with {{ user.username }}"
+          >
+            &#9654; Call
+          </button>
+          {% else %}
+          <button class="btn btn--ghost btn--sm" disabled aria-disabled="true">
+            Offline
+          </button>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    {% else %}
+      <p class="empty-state" id="emptyState">No other users have registered yet.</p>
+    {% endif %}
+  </section>
+
+  <!-- ---------------------------------------------------------------- -->
+  <!-- Call History section                                              -->
+  <!-- ---------------------------------------------------------------- -->
+  <section class="call-history" id="callHistorySection">
+    <h2 class="call-history__title">Recent Calls</h2>
+    <div class="call-history__list" id="callHistoryList">
+      <p class="call-history__empty">Loading call history…</p>
+    </div>
+  </section>
+
+</div>
+
+{# Pass current user id to JS via data attribute #}
+<div id="currentUserMeta"
+     data-user-id="{{ current_user.id }}"
+     data-username="{{ current_user.username }}"
+     hidden></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

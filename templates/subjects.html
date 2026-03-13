@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Subjects{% endblock %}
+
+{% block content %}
+<div class="subjects-page">
+
+  <div class="subjects-hero">
+    <h1 class="subjects-hero__title">
+      Find a <span>Tutor</span> in any Subject
+    </h1>
+    <p class="subjects-hero__sub">
+      Browse subjects and connect with student tutors who can help you out.
+    </p>
+  </div>
+
+  <div class="subjects-grid">
+
+    {% set subjects = [
+      {
+        "icon": "➗",
+        "name": "Mathematics",
+        "desc": "Algebra, geometry, calculus, statistics and more. Get help with any maths topic.",
+        "tutors": 12
+      },
+      {
+        "icon": "🔬",
+        "name": "Science",
+        "desc": "General science including experiments, scientific method and core concepts.",
+        "tutors": 9
+      },
+      {
+        "icon": "🧬",
+        "name": "Biology",
+        "desc": "Cells, genetics, ecosystems, human body and evolution.",
+        "tutors": 7
+      },
+      {
+        "icon": "⚗️",
+        "name": "Chemistry",
+        "desc": "Elements, reactions, periodic table, and laboratory techniques.",
+        "tutors": 6
+      },
+      {
+        "icon": "⚡",
+        "name": "Physics",
+        "desc": "Forces, energy, electricity, waves and space — from GCSE to A-level.",
+        "tutors": 8
+      },
+      {
+        "icon": "📚",
+        "name": "English",
+        "desc": "Essay writing, literature analysis, grammar, and creative writing.",
+        "tutors": 15
+      },
+      {
+        "icon": "🏛️",
+        "name": "History",
+        "desc": "World history, national events, historical sources, and critical analysis.",
+        "tutors": 10
+      },
+      {
+        "icon": "🌍",
+        "name": "Geography",
+        "desc": "Physical and human geography, maps, climate change, and ecosystems.",
+        "tutors": 5
+      },
+      {
+        "icon": "💻",
+        "name": "Computer Science",
+        "desc": "Programming, algorithms, data structures, networks, and cybersecurity.",
+        "tutors": 14
+      },
+      {
+        "icon": "🇫🇷",
+        "name": "French",
+        "desc": "Speaking, writing, grammar, and reading comprehension in French.",
+        "tutors": 6
+      },
+      {
+        "icon": "🇪🇸",
+        "name": "Spanish",
+        "desc": "Conversation practice, grammar conjugation, and vocabulary expansion.",
+        "tutors": 5
+      },
+      {
+        "icon": "🎨",
+        "name": "Art & Design",
+        "desc": "Drawing, painting, design principles, and art history critiques.",
+        "tutors": 4
+      },
+      {
+        "icon": "🎵",
+        "name": "Music",
+        "desc": "Music theory, notation, instrument practice, and composition.",
+        "tutors": 3
+      },
+      {
+        "icon": "📊",
+        "name": "Economics",
+        "desc": "Micro &amp; macro economics, markets, supply &amp; demand, fiscal policy.",
+        "tutors": 5
+      }
+    ] %}
+
+    {% for s in subjects %}
+    <a class="subject-card" href="{{ url_for('main.dashboard') }}">
+      <div class="subject-card__icon">{{ s.icon }}</div>
+      <span class="subject-card__name">{{ s.name }}</span>
+      <p class="subject-card__desc">{{ s.desc }}</p>
+      <span class="subject-card__action">
+        {{ s.tutors }} tutors available &rarr;
+      </span>
+    </a>
+    {% endfor %}
+
+  </div>
+
+</div>
+{% endblock %}

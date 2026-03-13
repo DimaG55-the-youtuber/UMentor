@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Approve {{ pending.kid_name }}'s Account{% endblock %}
+{% block body_class %}page--auth{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width:520px">
+  <div class="auth-card">
+
+    <div style="font-size:3rem;text-align:center;margin-bottom:var(--space-4)">&#128106;</div>
+    <h1 class="auth-card__title" style="text-align:center;margin-bottom:var(--space-2)">
+      Parental Approval Required
+    </h1>
+    <p class="auth-card__subtitle" style="text-align:center">
+      Your child wants to join <strong style="color:var(--color-primary)">UMentor</strong> —
+      a safe peer tutoring platform for students.
+    </p>
+
+    <!-- Kid details card -->
+    <div style="background:var(--color-surface-2);border:1px solid var(--color-border);
+                border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-6)">
+      <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);
+                text-transform:uppercase;font-weight:600;letter-spacing:.05em;
+                margin-bottom:var(--space-3)">Registration request details</p>
+      <table style="width:100%;border-collapse:collapse;font-size:var(--font-size-sm)">
+        <tr>
+          <td style="color:var(--color-text-muted);padding:var(--space-2) 0;
+                     padding-right:var(--space-4);white-space:nowrap">Student name</td>
+          <td style="font-weight:600">{{ pending.kid_name }}</td>
+        </tr>
+        <tr>
+          <td style="color:var(--color-text-muted);padding:var(--space-2) 0;
+                     padding-right:var(--space-4)">Student email</td>
+          <td style="font-weight:600">{{ pending.kid_email }}</td>
+        </tr>
+        <tr>
+          <td style="color:var(--color-text-muted);padding:var(--space-2) 0;
+                     padding-right:var(--space-4)">Requested</td>
+          <td style="font-weight:600">{{ pending.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- About UMentor -->
+    <div style="background:rgba(249,115,22,0.07);border:1px solid rgba(249,115,22,0.2);
+                border-radius:var(--radius-lg);padding:var(--space-4);
+                margin-bottom:var(--space-6);font-size:var(--font-size-sm)">
+      <p style="font-weight:600;color:var(--color-primary);margin-bottom:var(--space-2)">
+        About UMentor
+      </p>
+      <p style="color:var(--color-text-muted);line-height:1.6">
+        UMentor connects students so they can tutor each other in school subjects via
+        video call. Accounts are monitored and peer-to-peer only.
+        By approving, you confirm your child may use this service.
+      </p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.parent_approve', token=pending.parent_token) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <button class="btn btn--success btn--full btn--lg" type="submit" style="font-size:1rem">
+        &#9989;&nbsp; Approve {{ pending.kid_name }}'s Account
+      </button>
+    </form>
+
+    <p style="text-align:center;margin-top:var(--space-4);font-size:var(--font-size-xs);
+              color:var(--color-text-muted)">
+      Don't recognise this request? Simply ignore this page — the link expires in 48 hours
+      and no account will be created.
+    </p>
+
+  </div>
+</div>
+{% endblock %}

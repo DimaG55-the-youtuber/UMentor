@@ -1,0 +1,59 @@
+# ===========================================================================
+# requirements.txt — VideoCall application Python dependencies
+#
+# Install with:
+#   pip install -r requirements.txt
+#
+# For production, pin versions tightly. Versions below are minimums that
+# are known to work together.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Core web framework
+# ---------------------------------------------------------------------------
+Flask>=3.0.0
+
+# ---------------------------------------------------------------------------
+# Real-time WebSocket support
+# ---------------------------------------------------------------------------
+Flask-SocketIO>=5.3.6
+# High-performance async server required by Flask-SocketIO in production
+eventlet>=0.35.2
+
+# ---------------------------------------------------------------------------
+# Database ORM
+# ---------------------------------------------------------------------------
+Flask-SQLAlchemy>=3.1.1
+# PostgreSQL driver (needed when DATABASE_URL starts with postgresql://)
+# psycopg2-binary>=2.9.9    # uncomment for PostgreSQL
+# SQLite is included in Python's standard library — no extra driver needed
+
+# ---------------------------------------------------------------------------
+# Authentication & sessions
+# ---------------------------------------------------------------------------
+Flask-Login>=0.6.3
+
+# ---------------------------------------------------------------------------
+# Password hashing  (bcrypt — no plain-text passwords stored)
+# ---------------------------------------------------------------------------
+bcrypt>=4.1.2
+
+# ---------------------------------------------------------------------------
+# CSRF protection
+# ---------------------------------------------------------------------------
+Flask-WTF>=1.2.1
+
+# ---------------------------------------------------------------------------
+# WSGI / production server (optional but recommended for deployment)
+# ---------------------------------------------------------------------------
+gunicorn>=21.2.0
+
+# ---------------------------------------------------------------------------
+# Email sending (parent approval flow for kid registration)
+# ---------------------------------------------------------------------------
+Flask-Mail>=0.10.0
+
+# ---------------------------------------------------------------------------
+# Utilities
+# ---------------------------------------------------------------------------
+python-dotenv>=1.0.1      # load .env file for environment variables

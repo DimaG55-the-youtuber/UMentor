@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Call with {{ other_user.username }}{% endblock %}
+
+{% block content %}
+<div class="call-page" id="callPage">
+
+  <!-- ================================================================ -->
+  <!-- LEFT — video (83 %)                                               -->
+  <!-- ================================================================ -->
+  <div class="call-main">
+
+    <header class="call-header">
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('main.dashboard') }}" id="backBtn">
+        &#8592; Dashboard
+      </a>
+      <div class="call-header__title">
+        <span id="callStatus" class="call-status call-status--connecting">Connecting…</span>
+        <span class="call-header__peer" id="peerName">{{ other_user.username }}</span>
+      </div>
+      <span id="callTimer" class="call-timer hidden">00:00</span>
+    </header>
+
+    <div class="video-stage" id="videoStage">
+
+      <div class="video-remote" id="remoteVideoContainer">
+        <video
+          id="remoteVideo"
+          class="video-element video-element--remote"
+          autoplay
+          playsinline
+          aria-label="Remote video: {{ other_user.username }}"
+        ></video>
+        <div class="video-remote__placeholder" id="remotePlaceholder">
+          <span class="video-remote__avatar">{{ other_user.username[0].upper() }}</span>
+          <p>Waiting for {{ other_user.username }}…</p>
+        </div>
+      </div>
+
+      <!-- Local PiP -->
+      <div class="video-local" id="localVideoContainer">
+        <video
+          id="localVideo"
+          class="video-element video-element--local"
+          autoplay
+          muted
+          playsinline
+          aria-label="Your local video"
+        ></video>
+        <span class="video-local__label">You</span>
+      </div>
+
+      <!-- Mute + Camera floating overlay -->
+      <div class="call-controls" role="toolbar" aria-label="Call controls">
+        <button
+          class="call-ctrl-btn call-ctrl-btn--mute"
+          id="muteBtn"
+          aria-label="Mute microphone"
+          aria-pressed="false"
+          title="Mute / Unmute"
+        >
+          <span class="call-ctrl-btn__icon">&#127908;</span>
+          <span class="call-ctrl-btn__label">Mute</span>
+        </button>
+        <button
+          class="call-ctrl-btn call-ctrl-btn--camera"
+          id="cameraBtn"
+          aria-label="Turn off camera"
+          aria-pressed="false"
+          title="Camera On / Off"
+        >
+          <span class="call-ctrl-btn__icon">&#128249;</span>
+          <span class="call-ctrl-btn__label">Camera</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- RIGHT — sidebar (17 %)                                            -->
+  <!-- ================================================================ -->
+  <aside class="call-sidebar">
+
+    <!-- Live transcript (top ~35%) -->
+    <div class="transcript-live">
+      <div class="transcript-live__header">
+        <span>&#128172; Live Transcript</span>
+        <button class="transcript-dl-btn" id="downloadTranscriptBtn" title="Download transcript">&#8681;</button>
+      </div>
+      <div class="transcript-live__body" id="transcriptBody">
+        <p class="transcript-placeholder">Transcript will appear here once the call connects…</p>
+      </div>
+    </div>
+
+    <!-- AI Assistant (middle ~40%) -->
+    <div class="ai-panel">
+      <div class="ai-panel__header">
+        <span>&#10024; AI Assistant</span>
+      </div>
+      <div class="ai-panel__messages" id="aiMessages">
+        <div class="ai-msg ai-msg--system">
+          Ask me anything — I can see the live transcript.
+        </div>
+      </div>
+      <form class="ai-panel__form" id="aiForm" autocomplete="off">
+        <input
+          class="ai-panel__input"
+          type="text"
+          id="aiInput"
+          placeholder="Ask AI…"
+          maxlength="500"
+          aria-label="Ask AI assistant"
+        />
+        <button class="ai-panel__send" type="submit" aria-label="Send">&#10148;</button>
+      </form>
+    </div>
+
+    <!-- Hang Up — normal end call -->
+    <div class="hangup-wrap">
+      <button class="hangup-btn" id="hangUpBtn" aria-label="Hang up" title="End Call">
+        &#128381; Hang Up
+      </button>
+    </div>
+
+    <!-- STOP — emergency, 1-minute ban -->
+    <div class="stop-sign-wrap">
+      <button class="stop-sign" id="stopBtn" aria-label="Emergency stop" title="Emergency stop (1-min ban)">
+        STOP
+      </button>
+    </div>
+
+  </aside>
+
+</div>
+
+{# Metadata for JavaScript #}
+<div id="callMeta"
+     data-other-user-id="{{ other_user.id }}"
+     data-other-username="{{ other_user.username }}"
+     data-current-user-id="{{ current_user.id }}"
+     data-current-username="{{ current_user.username }}"
+     hidden></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/call.js') }}"></script>
+{% endblock %}

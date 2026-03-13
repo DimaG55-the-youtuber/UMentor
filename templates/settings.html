@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Profile card                                                         -->
+  <!-- ------------------------------------------------------------------ -->
+  <section class="settings-section">
+    <h2 class="settings-section__title">Profile</h2>
+    <div class="profile-card">
+      <div class="profile-card__avatar" aria-hidden="true">
+        {{ current_user.username[0].upper() }}
+      </div>
+      <div class="profile-card__info">
+        <p class="profile-card__username">{{ current_user.username }}</p>
+        <p class="profile-card__email">{{ current_user.email }}</p>
+        <p>
+          <span class="role-badge role-badge--{{ current_user.role }}">{{ current_user.role }}</span>
+        </p>
+        <p class="profile-card__meta">
+          Member since {{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else 'N/A' }}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Parent: children + invite form                                       -->
+  <!-- ------------------------------------------------------------------ -->
+  {% if current_user.role == 'parent' %}
+
+  <section class="settings-section">
+    <h2 class="settings-section__title">My Children</h2>
+
+    {% if children %}
+    <div class="children-list">
+      {% for child in children %}
+      <div class="child-card child-card--active">
+        <div class="child-card__avatar" aria-hidden="true">{{ child.username[0].upper() }}</div>
+        <div class="child-card__info">
+          <p class="child-card__name">{{ child.username }}</p>
+          <p class="child-card__email">{{ child.email }}</p>
+          <span class="status-pill status-pill--active">Active</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if pending_invites %}
+    <h3 class="settings-section__subtitle">Pending Invitations</h3>
+    <div class="children-list">
+      {% for invite in pending_invites %}
+      <div class="child-card child-card--pending">
+        <div class="child-card__avatar child-card__avatar--pending" aria-hidden="true">
+          {{ invite.kid_name[0].upper() }}
+        </div>
+        <div class="child-card__info">
+          <p class="child-card__name">{{ invite.kid_name }}</p>
+          <p class="child-card__email">{{ invite.kid_email }}</p>
+          {% if invite.is_expired %}
+          <span class="status-pill status-pill--expired">Expired</span>
+          {% else %}
+          <span class="status-pill status-pill--pending">Pending setup</span>
+          <p class="child-card__expiry">Expires {{ invite.expires_at.strftime('%b %d, %Y') }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not children and not pending_invites %}
+    <p class="settings-empty">No children linked yet. Invite one below.</p>
+    {% endif %}
+  </section>
+
+  <!-- Invite form -->
+  <section class="settings-section">
+    <h2 class="settings-section__title">Invite a Child</h2>
+    <p class="settings-section__desc">
+      Your child will receive an email with a link to create their UMentor account.
+      Their account will automatically be linked to yours.
+    </p>
+    <form class="invite-form" method="post" action="{{ url_for('main.invite_child') }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <div class="invite-form__row">
+        <div class="form-group">
+          <label class="form-label" for="kid_name">Child's name</label>
+          <input
+            class="form-input"
+            type="text"
+            id="kid_name"
+            name="kid_name"
+            placeholder="e.g. Jamie"
+            maxlength="80"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="kid_email">Child's email</label>
+          <input
+            class="form-input"
+            type="email"
+            id="kid_email"
+            name="kid_email"
+            placeholder="jamie@example.com"
+            maxlength="120"
+            required
+          />
+        </div>
+      </div>
+      <button class="btn btn--primary" type="submit">Send Invitation</button>
+    </form>
+  </section>
+
+  {% endif %}{# end parent block #}
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Kid: parent info                                                     -->
+  <!-- ------------------------------------------------------------------ -->
+  {% if current_user.role == 'kid' %}
+  <section class="settings-section">
+    <h2 class="settings-section__title">My Parent</h2>
+    {% if parent %}
+    <div class="profile-card">
+      <div class="profile-card__avatar" aria-hidden="true">{{ parent.username[0].upper() }}</div>
+      <div class="profile-card__info">
+        <p class="profile-card__username">{{ parent.username }}</p>
+        <p class="profile-card__email">{{ parent.email }}</p>
+      </div>
+    </div>
+    {% else %}
+    <p class="settings-empty">Your account is not currently linked to a parent.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

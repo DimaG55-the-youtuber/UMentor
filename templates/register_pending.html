@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Check Your Email{% endblock %}
+{% block body_class %}page--auth{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width:480px">
+  <div class="auth-card" style="text-align:center">
+
+    <div style="font-size:4rem;margin-bottom:var(--space-4)">&#128231;</div>
+    <h1 class="auth-card__title">Email sent!</h1>
+
+    {% if kid_name %}
+    <p style="color:var(--color-text-muted);margin-bottom:var(--space-6)">
+      Hi <strong style="color:var(--color-text)">{{ kid_name }}</strong>! We've sent an approval
+      request to your parent's inbox.
+    </p>
+    {% else %}
+    <p style="color:var(--color-text-muted);margin-bottom:var(--space-6)">
+      We've sent an approval request to your parent's inbox.
+    </p>
+    {% endif %}
+
+    <div style="background:var(--color-surface-2);border:1px solid var(--color-border);
+                border-radius:var(--radius-lg);padding:var(--space-5);text-align:left;
+                margin-bottom:var(--space-6)">
+      <p style="font-weight:600;margin-bottom:var(--space-3)">What happens next?</p>
+      <ol style="padding-left:var(--space-5);color:var(--color-text-muted);
+                 font-size:var(--font-size-sm);line-height:2">
+        <li>&#128233; Your parent receives an approval email</li>
+        <li>&#9989; They click the link to approve your account</li>
+        <li>&#128272; You receive a link to set your username &amp; password</li>
+        <li>&#127881; Your UMentor account is ready!</li>
+      </ol>
+    </div>
+
+    <p style="font-size:var(--font-size-xs);color:var(--color-text-muted)">
+      The approval link expires in <strong>48 hours</strong>.
+      If it expires, just <a href="{{ url_for('auth.register_kid') }}">start over</a>.
+    </p>
+
+    <p class="auth-card__footer">
+      <a href="{{ url_for('auth.login') }}">Go to Sign In</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

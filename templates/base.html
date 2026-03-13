@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}UMentor{% endblock %} — UMentor</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- App stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+  {# CSRF meta tag — read by JavaScript for AJAX / WebSocket handshake #}
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
+
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Navigation                                                           -->
+  <!-- ------------------------------------------------------------------ -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="navbar__brand">
+      <a href="{{ url_for('main.dashboard') if current_user.is_authenticated else url_for('auth.login') }}">
+        <span class="navbar__logo">&#127979;</span>
+        <span class="navbar__name">
+          <span class="navbar__name-u">U</span><span class="navbar__name-rest">Mentor</span>
+        </span>
+      </a>
+      {% if current_user.is_authenticated %}
+      <nav class="navbar__links" aria-label="App navigation">
+        <a class="navbar__link{% if request.endpoint == 'main.dashboard' %} active{% endif %}"
+           href="{{ url_for('main.dashboard') }}">Dashboard</a>
+        <a class="navbar__link{% if request.endpoint == 'main.subjects' %} active{% endif %}"
+           href="{{ url_for('main.subjects') }}">Subjects</a>
+        <a class="navbar__link{% if request.endpoint == 'main.settings' %} active{% endif %}"
+           href="{{ url_for('main.settings') }}">Settings</a>
+      </nav>
+      {% endif %}
+    </div>
+
+    {% if current_user.is_authenticated %}
+    <div class="navbar__user">
+      <span class="status-dot status-dot--online" aria-hidden="true"></span>
+      <span class="navbar__username">{{ current_user.username }}</span>
+      <span class="role-badge role-badge--{{ current_user.role }}">{{ current_user.role }}</span>
+      <a class="btn btn--ghost btn--sm" href="{{ url_for('auth.logout') }}">Sign out</a>
+    </div>
+    {% endif %}
+  </nav>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Flash messages                                                       -->
+  <!-- ------------------------------------------------------------------ -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container" aria-live="polite">
+      {% for category, message in messages %}
+      <div class="flash flash--{{ category }}" role="alert">
+        <span>{{ message }}</span>
+        <button class="flash__close" onclick="this.parentElement.remove()" aria-label="Dismiss">&#10005;</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Page content                                                         -->
+  <!-- ------------------------------------------------------------------ -->
+  <main class="main-content" id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Outgoing call overlay (shown while waiting for the callee to answer) -->
+  <!-- ------------------------------------------------------------------ -->
+  <div class="call-overlay hidden" id="outgoingCallOverlay" role="dialog" aria-modal="true" aria-labelledby="outgoingCalleeName">
+    <div class="call-overlay__card">
+      <div class="call-overlay__avatar" style="animation:none">&#128222;</div>
+      <h2 class="call-overlay__title">Calling&hellip;</h2>
+      <p class="call-overlay__from">
+        Waiting for <strong id="outgoingCalleeName">Someone</strong> to answer&hellip;
+      </p>
+      <div class="call-overlay__actions">
+        <button class="btn btn--danger btn--lg" id="cancelCallBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Incoming call overlay (injected by dashboard.js / present globally) -->
+  <!-- ------------------------------------------------------------------ -->
+  <div class="call-overlay hidden" id="incomingCallOverlay" role="dialog" aria-modal="true" aria-labelledby="incomingCallerName">
+    <div class="call-overlay__card">
+      <div class="call-overlay__avatar" aria-hidden="true">&#128222;</div>
+      <h2 class="call-overlay__title">Incoming Call</h2>
+      <p class="call-overlay__from">
+        <strong id="incomingCallerName">Someone</strong> is calling you…
+      </p>
+      <div class="call-overlay__actions">
+        <button class="btn btn--success btn--lg" id="acceptCallBtn">Accept</button>
+        <button class="btn btn--danger  btn--lg" id="declineCallBtn">Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Socket.IO client library                                             -->
+  <!-- ------------------------------------------------------------------ -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

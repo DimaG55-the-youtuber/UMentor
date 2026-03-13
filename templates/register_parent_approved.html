@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Account Approved{% endblock %}
+{% block body_class %}page--auth{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width:480px">
+  <div class="auth-card" style="text-align:center">
+
+    <div style="font-size:4rem;margin-bottom:var(--space-4)">&#9989;</div>
+    <h1 class="auth-card__title">Account Approved!</h1>
+    <p style="color:var(--color-text-muted);margin-bottom:var(--space-6)">
+      You've approved <strong style="color:var(--color-text)">{{ pending.kid_name }}</strong>'s
+      UMentor account. We've emailed them a link to set up their username and password.
+    </p>
+
+    <div style="background:var(--color-surface-2);border:1px solid var(--color-border);
+                border-radius:var(--radius-lg);padding:var(--space-4);
+                margin-bottom:var(--space-6);font-size:var(--font-size-sm);text-align:left">
+      <p style="color:var(--color-text-muted)">
+        &#9989;&nbsp; Email sent to <strong>{{ pending.kid_email }}</strong><br>
+        &#8987;&nbsp; They have <strong>72 hours</strong> to complete setup.
+      </p>
+    </div>
+
+    <p style="font-size:var(--font-size-xs);color:var(--color-text-muted)">
+      Thank you for keeping UMentor safe for students.
+    </p>
+
+  </div>
+</div>
+{% endblock %}

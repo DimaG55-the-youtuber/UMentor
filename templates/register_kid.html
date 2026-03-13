@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Student Registration{% endblock %}
+{% block body_class %}page--auth{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+
+    <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)">
+      <span style="font-size:1.8rem">&#127891;</span>
+      <div>
+        <h1 class="auth-card__title" style="margin-bottom:0">Student Sign-Up</h1>
+        <p style="font-size:var(--font-size-xs);color:var(--color-primary);font-weight:600;margin:0">
+          Under 18
+        </p>
+      </div>
+    </div>
+
+    <div class="approval-banner">
+      <span class="approval-banner__icon">&#128231;</span>
+      <div class="approval-banner__text">
+        <strong>Parent approval required.</strong><br>
+        We'll email your parent or guardian a link to approve your account.
+        Once they approve, you'll get an email to set your username and password.
+      </div>
+    </div>
+
+    <form class="auth-form" method="POST" action="{{ url_for('auth.register_kid') }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <div class="form-group">
+        <label class="form-label" for="kid_name">Your first name</label>
+        <input class="form-input" type="text" id="kid_name" name="kid_name"
+          placeholder="e.g. Alex" autocomplete="given-name"
+          value="{{ kid_name or '' }}" required minlength="2" maxlength="60" />
+        <span class="form-hint">This will be shown to your parent in the approval email.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="kid_email">Your email address</label>
+        <input class="form-input" type="email" id="kid_email" name="kid_email"
+          placeholder="your@email.com" autocomplete="email"
+          value="{{ kid_email or '' }}" required />
+        <span class="form-hint">You'll use this to log in once your account is set up.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="parent_email">Parent / guardian's email</label>
+        <input class="form-input" type="email" id="parent_email" name="parent_email"
+          placeholder="parent@email.com" autocomplete="off"
+          value="{{ parent_email or '' }}" required />
+        <span class="form-hint">We'll send them a link to approve your account. This is required by our safeguarding policy.</span>
+      </div>
+
+      <button class="btn btn--primary btn--full" type="submit">
+        Send Approval Request &rarr;
+      </button>
+    </form>
+
+    <p class="auth-card__footer">
+      <a href="{{ url_for('auth.register') }}">&larr; Back</a>
+      &nbsp;&middot;&nbsp;
+      Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

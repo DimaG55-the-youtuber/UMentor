@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Parent Registration{% endblock %}
+{% block body_class %}page--auth{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+
+    <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)">
+      <span style="font-size:1.8rem">&#128106;</span>
+      <div>
+        <h1 class="auth-card__title" style="margin-bottom:0">Create Parent Account</h1>
+        <p style="font-size:var(--font-size-xs);color:var(--color-primary);font-weight:600;margin:0">
+          Parent / Guardian
+        </p>
+      </div>
+    </div>
+    <p class="auth-card__subtitle">
+      You'll be able to monitor and approve your child's UMentor activity.
+    </p>
+
+    <form class="auth-form" method="POST" action="{{ url_for('auth.register_parent') }}" novalidate id="registerForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" type="text" id="username" name="username"
+          placeholder="e.g. parent_john" autocomplete="username"
+          value="{{ username or '' }}" required minlength="3" maxlength="80"
+          pattern="[a-zA-Z0-9_]+" title="3–80 characters: letters, numbers, underscores" />
+        <span class="form-hint">Letters, numbers, and underscores (3–80 chars)</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email address</label>
+        <input class="form-input" type="email" id="email" name="email"
+          placeholder="you@example.com" autocomplete="email"
+          value="{{ email or '' }}" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-group">
+          <input class="form-input" type="password" id="password" name="password"
+            placeholder="••••••••" autocomplete="new-password" required minlength="8" />
+          <button type="button" class="input-group__toggle" id="togglePass1" aria-label="Show password">
+            &#128065;
+          </button>
+        </div>
+        <div class="strength-meter" id="strengthMeter" aria-live="polite">
+          <div class="strength-meter__bar">
+            <div class="strength-meter__fill" id="strengthFill"></div>
+          </div>
+          <span class="strength-meter__label" id="strengthLabel">Enter a password</span>
+        </div>
+        <ul class="form-hint password-rules" id="passwordRules">
+          <li id="rule-length"  class="rule rule--fail">At least 8 characters</li>
+          <li id="rule-upper"   class="rule rule--fail">One uppercase letter (A–Z)</li>
+          <li id="rule-digit"   class="rule rule--fail">One digit (0–9)</li>
+          <li id="rule-special" class="rule rule--fail">One special character (!@#$…)</li>
+        </ul>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirm_password">Confirm password</label>
+        <div class="input-group">
+          <input class="form-input" type="password" id="confirm_password" name="confirm_password"
+            placeholder="••••••••" autocomplete="new-password" required />
+          <button type="button" class="input-group__toggle" id="togglePass2" aria-label="Show password">
+            &#128065;
+          </button>
+        </div>
+        <span class="form-hint" id="matchHint" aria-live="polite"></span>
+      </div>
+
+      <button class="btn btn--primary btn--full" type="submit" id="submitBtn">
+        Create Parent Account
+      </button>
+    </form>
+
+    <p class="auth-card__footer">
+      <a href="{{ url_for('auth.register') }}">&larr; Back</a>
+      &nbsp;&middot;&nbsp;
+      Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function makeToggle(btnId, inputId) {
+  document.getElementById(btnId).addEventListener('click', function () {
+    const inp = document.getElementById(inputId);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    this.textContent = inp.type === 'password' ? '👁' : '🙈';
+  });
+}
+makeToggle('togglePass1', 'password');
+makeToggle('togglePass2', 'confirm_password');
+
+const pwInput   = document.getElementById('password');
+const cfInput   = document.getElementById('confirm_password');
+const fill      = document.getElementById('strengthFill');
+const label     = document.getElementById('strengthLabel');
+const matchHint = document.getElementById('matchHint');
+const submitBtn = document.getElementById('submitBtn');
+
+const LABELS = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+
+pwInput.addEventListener('input', function () {
+  const val = this.value;
+  let score = 0;
+  const rules = { length: val.length >= 8, upper: /[A-Z]/.test(val), digit: /[0-9]/.test(val), special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val) };
+  Object.values(rules).forEach(ok => { if (ok) score++; });
+  ['length','upper','digit','special'].forEach(r => {
+    const el = document.getElementById('rule-' + r);
+    el.className = 'rule ' + (rules[r] ? 'rule--pass' : 'rule--fail');
+  });
+  fill.className = `strength-meter__fill strength-meter__fill--${score}`;
+  fill.style.width = (score * 25) + '%';
+  label.textContent = LABELS[score] || 'Enter a password';
+});
+
+function checkMatch() {
+  if (!cfInput.value) { matchHint.textContent = ''; return; }
+  if (pwInput.value === cfInput.value) {
+    matchHint.style.color = 'var(--color-success)';
+    matchHint.textContent = '✓ Passwords match';
+  } else {
+    matchHint.style.color = 'var(--color-danger)';
+    matchHint.textContent = '✗ Passwords do not match';
+  }
+}
+pwInput.addEventListener('input', checkMatch);
+cfInput.addEventListener('input', checkMatch);
+</script>
+{% endblock %}
