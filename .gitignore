@@ -33,5 +33,4 @@ Thumbs.db
 .vscode/
 
 # Local binaries
-cloudflared.exe
-ffmpeg.exe
+*.exe
