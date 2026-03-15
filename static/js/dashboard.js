@@ -65,10 +65,7 @@
     console.error("[Dashboard] Connection error:", err.message);
   });
 
-  // -----------------------------------------------------------------------
-  // Real-time user status changes
-  // -----------------------------------------------------------------------
-  socket.on("user_status_changed", ({ user_id, username, is_online }) => {
+  function applyUserStatus(user_id, username, is_online) {
     // Never update the current user's own card (they are not shown)
     if (user_id === CURRENT_ID) return;
 
@@ -79,21 +76,15 @@
     const statusText = card.querySelector(".status-text");
     const actionDiv  = card.querySelector(".user-card__action");
 
-    // Update data attribute (used by search filter)
     card.dataset.online = is_online ? "true" : "false";
-
-    // Toggle classes on the card
     card.classList.toggle("user-card--online",  is_online);
     card.classList.toggle("user-card--offline", !is_online);
 
-    // Dot
     dot.className = `status-dot status-dot--${is_online ? "online" : "offline"}`;
     dot.setAttribute("aria-label", is_online ? "online" : "offline");
 
-    // Status text
     statusText.textContent = is_online ? "Online" : "Offline";
 
-    // Action button
     if (is_online) {
       actionDiv.innerHTML = `
         <button
@@ -107,10 +98,6 @@
       actionDiv.innerHTML = `<button class="btn btn--ghost btn--sm" disabled aria-disabled="true">Offline</button>`;
     }
 
-    // Update global online count
-    refreshOnlineCount();
-
-    // Update card avatar colour
     const avatar = card.querySelector(".user-card__avatar");
     if (is_online) {
       avatar.style.background = "";
@@ -119,6 +106,19 @@
       avatar.style.background = "var(--color-surface-2)";
       avatar.style.color      = "var(--color-text-muted)";
     }
+
+    refreshOnlineCount();
+  }
+
+  socket.on("initial_user_statuses", ({ users }) => {
+    (users || []).forEach(user => applyUserStatus(user.user_id, user.username, user.is_online));
+  });
+
+  // -----------------------------------------------------------------------
+  // Real-time user status changes
+  // -----------------------------------------------------------------------
+  socket.on("user_status_changed", ({ user_id, username, is_online }) => {
+    applyUserStatus(user_id, username, is_online);
   });
 
   // -----------------------------------------------------------------------
@@ -151,7 +151,7 @@
     // guaranteed to reach the server before the page unloads.
     socket.emit("call_navigating");
     sessionStorage.setItem(`call_role_${caller_id}`, "callee");
-    setTimeout(() => { window.location.href = `/call/${caller_id}`; }, 200);
+    setTimeout(() => { window.location.href = `/call/${caller_id}`; }, 600);
   });
 
   declineBtn.addEventListener("click", () => {
@@ -176,7 +176,7 @@
     hideOutgoingOverlay();
     socket.emit("call_navigating");  // grace period: don't kill call on disconnect
     sessionStorage.setItem(`call_role_${accepter_id}`, "caller");
-    setTimeout(() => { window.location.href = `/call/${accepter_id}`; }, 200);
+    setTimeout(() => { window.location.href = `/call/${accepter_id}`; }, 600);
   });
 
   // Callee declined our call

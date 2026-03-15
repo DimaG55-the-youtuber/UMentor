@@ -50,6 +50,17 @@ class Config:
     SOCKETIO_CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS") or "*"
 
     # ---------------------------------------------------------------------------
+    # Transcription backend
+    # ---------------------------------------------------------------------------
+    # assemblyai (default): managed speech-to-text API
+    # gemini: remote model API (uses GOOGLE_API_KEY quota)
+    TRANSCRIBE_PROVIDER = os.environ.get("TRANSCRIBE_PROVIDER", "assemblyai")
+    ASSEMBLYAI_API_KEY = os.environ.get("ASSEMBLYAI_API_KEY", "")
+    ASSEMBLYAI_SPEECH_MODEL = os.environ.get("ASSEMBLYAI_SPEECH_MODEL", "universal-2")
+    ASSEMBLYAI_LANGUAGE_CODE = os.environ.get("ASSEMBLYAI_LANGUAGE_CODE", "")
+    ASSEMBLYAI_FILTER_PROFANITY = os.environ.get("ASSEMBLYAI_FILTER_PROFANITY", "true").lower() == "true"
+
+    # ---------------------------------------------------------------------------
     # Flask-Mail  (used for parent-approval and kid-setup emails)
     # Set these via environment variables or a .env file.
     # In development without email configured, tokens are shown in flash messages.

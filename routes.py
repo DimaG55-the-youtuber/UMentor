@@ -482,17 +482,155 @@ def call_page(user_id: int):
         abort(400, "You cannot call yourself.")
 
     other_user = User.query.get_or_404(user_id)
-
-    if not other_user.is_online:
-        flash(f"{other_user.username} is currently offline.", "warning")
-        return redirect(url_for("main.dashboard"))
-
+    # NOTE: we no longer gate on other_user.is_online here.
+    # During call setup the callee briefly appears offline in the DB while
+    # their dashboard socket disconnects and the call-page socket reconnects.
+    # The call page (call.js + sockets.py) handles all error states via
+    # WebSocket events (call_error, peer_ready, etc.).
     return render_template("call.html", other_user=other_user)
 
 
 # ---------------------------------------------------------------------------
 # JSON API
 # ---------------------------------------------------------------------------
+
+@main_bp.route("/api/transcribe", methods=["POST"])
+@login_required
+def api_transcribe():
+    """Transcribe a short audio blob via AssemblyAI (default) or Gemini fallback."""
+    import os
+    import tempfile
+
+    def _clean_transcribed_text(value: str) -> str:
+        text = (value or "").strip()
+        if text.lower() in (
+            "",
+            ".",
+            "(silence)",
+            "[silence]",
+            "silence",
+            "[no audio]",
+            "[no speech]",
+            "no speech detected.",
+            "[audio]",
+            "[music]",
+            "[background noise]",
+        ):
+            return ""
+        return text
+
+    def _transcribe_with_assemblyai(audio_bytes: bytes, src_mime: str) -> str:
+        try:
+            import assemblyai as aai
+        except ImportError as exc:
+            raise RuntimeError("assemblyai not installed") from exc
+
+        api_key = os.environ.get("ASSEMBLYAI_API_KEY") or current_app.config.get("ASSEMBLYAI_API_KEY")
+        if not api_key:
+            raise RuntimeError("ASSEMBLYAI_API_KEY not set")
+
+        aai.settings.api_key = api_key
+        model_name = (current_app.config.get("ASSEMBLYAI_SPEECH_MODEL", "universal-2") or "universal-2").strip().lower()
+        language_code = (current_app.config.get("ASSEMBLYAI_LANGUAGE_CODE", "") or "").strip()
+        filter_profanity = bool(current_app.config.get("ASSEMBLYAI_FILTER_PROFANITY", True))
+        if not model_name:
+            raise RuntimeError("ASSEMBLYAI_SPEECH_MODEL cannot be empty")
+
+        ext_map = {
+            "audio/webm": ".webm",
+            "audio/ogg": ".ogg",
+            "audio/wav": ".wav",
+            "audio/x-wav": ".wav",
+            "audio/mpeg": ".mp3",
+            "audio/mp3": ".mp3",
+            "audio/mp4": ".m4a",
+            "audio/x-m4a": ".m4a",
+        }
+        src_ext = ext_map.get(src_mime, ".webm")
+
+        with tempfile.TemporaryDirectory(prefix="umentor_stt_") as td:
+            src_path = os.path.join(td, f"chunk{src_ext}")
+            with open(src_path, "wb") as f:
+                f.write(audio_bytes)
+
+            cfg_kwargs = {
+                # Required by newer AssemblyAI API variants that validate speech_models list.
+                "speech_models": [model_name],
+                "filter_profanity": filter_profanity,
+            }
+            if language_code:
+                cfg_kwargs["language_code"] = language_code
+
+            config = aai.TranscriptionConfig(**cfg_kwargs)
+            transcript = aai.Transcriber().transcribe(src_path, config=config)
+            if getattr(transcript, "status", None) == aai.TranscriptStatus.error:
+                raise RuntimeError(f"AssemblyAI transcription failed: {transcript.error}")
+            return (transcript.text or "").strip()
+
+    def _transcribe_with_gemini(audio_bytes: bytes, src_mime: str) -> str:
+        try:
+            from google import genai
+            from google.genai import types
+        except ImportError as exc:
+            raise RuntimeError("google-genai not installed") from exc
+
+        api_key = os.environ.get("GOOGLE_API_KEY") or current_app.config.get("GOOGLE_API_KEY")
+        if not api_key:
+            raise RuntimeError("GOOGLE_API_KEY not set")
+
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[
+                types.Part.from_bytes(data=audio_bytes, mime_type=src_mime),
+                types.Part(text=(
+                    "This is a short audio clip from a live tutoring video call. "
+                    "Transcribe EXACTLY what is spoken. Return ONLY the spoken words "
+                    "with no commentary, punctuation adjustments, or preamble. "
+                    "If no speech is present, return an empty string."
+                )),
+            ],
+        )
+        return (response.text or "").strip()
+
+    audio_data = request.get_data()
+    if not audio_data or len(audio_data) < 500:
+        return jsonify({"text": ""})
+
+    mime_type = (request.content_type or "audio/webm").split(";")[0].strip()
+    provider = (current_app.config.get("TRANSCRIBE_PROVIDER", "assemblyai") or "assemblyai").lower()
+    room_id = (request.headers.get("X-Call-Room-Id") or "").strip()
+
+    try:
+        if provider == "gemini":
+            text = _transcribe_with_gemini(audio_data, mime_type)
+        else:
+            text = _transcribe_with_assemblyai(audio_data, mime_type)
+
+        text = _clean_transcribed_text(text)
+        response = {"text": text, "provider": provider}
+        if provider == "assemblyai":
+            response["speech_model"] = current_app.config.get("ASSEMBLYAI_SPEECH_MODEL", "universal-2")
+            response["filter_profanity"] = bool(current_app.config.get("ASSEMBLYAI_FILTER_PROFANITY", True))
+
+        profanity_detected = bool("*" in text)
+        response["profanity_detected"] = profanity_detected
+        if profanity_detected and room_id:
+            try:
+                from sockets import force_end_call_room
+                force_end_call_room(
+                    room_id=room_id,
+                    reason="policy_profanity_detected",
+                    ender_name="UMentor Moderation",
+                )
+                response["moderation_action"] = "ended_call"
+            except Exception as mod_exc:
+                current_app.logger.error("Moderation enforcement failed for room %s: %s", room_id, mod_exc)
+                response["moderation_action"] = "enforcement_failed"
+        return jsonify(response)
+    except Exception as exc:
+        current_app.logger.error("Transcribe error (%s): %s", provider, exc)
+        return jsonify({"text": "", "error": str(exc)}), 500
 
 @main_bp.route("/api/users")
 @login_required

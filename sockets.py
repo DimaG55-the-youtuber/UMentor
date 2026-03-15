@@ -98,6 +98,24 @@ def on_connect():
         user.last_seen = datetime.utcnow()
         db.session.commit()
 
+    # Send the newly connected client a snapshot of everyone already online.
+    # Without this, existing users see the newcomer come online, but the newcomer
+    # does not receive the prior online state for already-connected users.
+    initial_statuses = []
+    for other_uid in _user_sessions:
+        if other_uid == uid:
+            continue
+        other_user = db.session.get(User, other_uid)
+        if other_user:
+            initial_statuses.append(
+                {
+                    "user_id": other_uid,
+                    "username": other_user.username,
+                    "is_online": True,
+                }
+            )
+    emit("initial_user_statuses", {"users": initial_statuses})
+
     # Broadcast to all clients (including this one so the sender sees own dot go green)
     _broadcast_status(uid, current_user.username, True)
 
@@ -121,19 +139,13 @@ def on_disconnect():
     uid = current_user.id
     _user_sessions.pop(uid, None)
 
-    # If this disconnect is due to a page navigation (grace window = 12 s),
-    # skip call termination – the user will reconnect immediately on the
-    # call page.
+    # If this disconnect is due to a page navigation (grace window = 20 s),
+    # skip all side-effects.  The on_connect on the new page will restore
+    # the user's online status.  Writing is_online=False to DB here was
+    # causing the /call route to see the callee as offline and redirect
+    # the caller back to dashboard with a "user is offline" flash.
     navigating_ts = _call_transitions.pop(uid, None)
     if navigating_ts and (time.monotonic() - navigating_ts) < 20:
-        # Still mark offline in DB; the new page's connect event will
-        # flip it back to online almost immediately.
-        user = db.session.get(User, uid)
-        if user:
-            user.is_online = False
-            user.last_seen = datetime.utcnow()
-            db.session.commit()
-        _broadcast_status(uid, current_user.username, False)
         return
 
     # Update database
@@ -231,6 +243,13 @@ def on_call_accepted(data: dict):
 
     # Both participants join the shared call room
     join_room(room_id)
+
+    # Pre-mark both parties as "navigating" so their socket disconnect during
+    # the page transition is treated as a grace-period event, even when the
+    # client-side call_navigating message arrives late or is lost.
+    if caller_id:
+        _call_transitions[caller_id]       = time.monotonic()
+    _call_transitions[current_user.id]     = time.monotonic()  # callee
 
     # Update call log status
     if room_id in _active_calls:
@@ -411,6 +430,24 @@ def on_ice_candidate(data: dict):
 # ===========================================================================
 # Internal helpers
 # ===========================================================================
+
+def force_end_call_room(room_id: str, reason: str = "policy_violation", ender_name: str = "System") -> None:
+    """Force-end an active call room (e.g. moderation policy) and notify both peers."""
+    info = _active_calls.pop(room_id, None)
+    _room_peers_ready.pop(room_id, None)
+    if not info:
+        return
+
+    caller_id = info.get("caller_id")
+    callee_id = info.get("callee_id")
+
+    payload = {"ender_name": ender_name, "reason": reason}
+    if caller_id:
+        socketio.emit("call_ended", payload, room=f"user_{caller_id}")
+    if callee_id:
+        socketio.emit("call_ended", payload, room=f"user_{callee_id}")
+
+    _close_call_log(info, "completed")
 
 def _close_call_log(info: dict, status: str) -> None:
     """Finalise a CallLog entry when a call ends."""

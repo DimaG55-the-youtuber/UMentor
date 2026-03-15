@@ -57,3 +57,4 @@ Flask-Mail>=0.10.0
 # Utilities
 # ---------------------------------------------------------------------------
 python-dotenv>=1.0.1      # load .env file for environment variables
+assemblyai>=0.33.0
